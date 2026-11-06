@@ -89,6 +89,10 @@ function Camera({ onQrScanned }) {
   const startCamera = async () => {
     try {
       setError("");
+      if ("Notification" in window &&
+        Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
       hasScannedRef.current = false;
 
       const mediaStream =

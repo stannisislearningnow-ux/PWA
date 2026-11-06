@@ -1,19 +1,26 @@
-
-import Camera from "./components/Camera.jsx";
-import Notification from "./components/Notifications.jsx";
+import { useState } from "react";
+import Camera from "./components/Camera";
+import Notifications from "./components/Notifications";
 
 function App() {
+  const [scannedUrl, setScannedUrl] = useState("");
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>My PWA Application</h1>
+    <div>
+      <h1>QR Attendance</h1>
 
-      <hr />
+      <Camera onQrScanned={setScannedUrl} />
 
-      <Camera />
+      <Notifications scannedUrl={scannedUrl} />
 
-      <hr />
-
-      <Notification />
+      {scannedUrl && (
+        <p>
+          Scanned website:{" "}
+          <a href={scannedUrl} target="_blank" rel="noreferrer">
+            {scannedUrl}
+          </a>
+        </p>
+      )}
     </div>
   );
 }

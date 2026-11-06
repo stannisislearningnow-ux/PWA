@@ -1,69 +1,44 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-function Notifications() {
+function Notifications({ scannedUrl }) {
   const [message, setMessage] = useState("");
 
-  const sendNotification = async () => {
-  const start = performance.now();
+  useEffect(() => {
+    if (!scannedUrl) return;
 
-  const logTime = (step) => {
-    console.log(
-      `${step}: ${(performance.now() - start).toFixed(2)} ms`
-    );
-  };
+    const sendNotification = () => {
+      if (!("Notification" in window)) {
+        setMessage("Notifications are not supported.");
+        return;
+      }
 
-  try {
-    logTime("Started");
+      if (Notification.permission !== "granted") {
+        setMessage("Please allow notifications to receive scan alerts.");
+        return;
+      }
 
-    if (!("Notification" in window)) {
-      setMessage("Notifications are not supported.");
-      return;
-    }
+      const notification = new Notification(
+        "QR code scanned successfully!",
+        {
+          body: `Website: ${scannedUrl}`,
+        }
+      );
 
-    let permission = Notification.permission;
-    logTime("Checked permission");
+      // Open the scanned website when notification is clicked
+      notification.onclick = () => {
+        window.open(scannedUrl, "_blank");
+        notification.close();
+      };
 
-    if (permission === "default") {
-      permission = await Notification.requestPermission();
-      logTime("Permission requested");
-    }
+      setMessage("Notification sent!");
+    };
 
-    if (permission !== "granted") {
-      setMessage("Notification permission denied.");
-      return;
-    }
-
-    const registration =
-      await navigator.serviceWorker?.getRegistration();
-
-    logTime("Service worker checked");
-
-    if (registration?.active) {
-      await registration.showNotification("Hello Doctor!", {
-        body: "Your PWA notification is working!",
-      });
-    } else {
-      new Notification("Hello Doctor!", {
-        body: "Your PWA notification is working!",
-      });
-    }
-
-    logTime("Notification sent");
-    setMessage("Notification sent!");
-  } catch (error) {
-    console.error("Notification error:", error);
-    setMessage("Error: " + error.message);
-  }
-};
+    sendNotification();
+  }, [scannedUrl]);
 
   return (
     <div>
       <h2>Notifications</h2>
-
-      <button onClick={sendNotification}>
-        Send Notification
-      </button>
-
       <p>{message}</p>
     </div>
   );
