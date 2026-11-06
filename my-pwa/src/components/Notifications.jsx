@@ -1,46 +1,72 @@
+import { useState } from "react";
 
-const sendNotification = async () => {
+function Notifications() {
+  const [message, setMessage] = useState("");
+
+  const sendNotification = async () => {
   const start = performance.now();
 
-  try {
-    console.log("1. Button clicked");
+  const logTime = (step) => {
+    console.log(
+      `${step}: ${(performance.now() - start).toFixed(2)} ms`
+    );
+  };
 
-    if (window.Notification.permission !== "granted") {
-      setMessage("Notification permission is not granted.");
+  try {
+    logTime("Started");
+
+    if (!("Notification" in window)) {
+      setMessage("Notifications are not supported.");
       return;
     }
 
-    console.log("2. Getting Service Worker...");
+    let permission = Notification.permission;
+    logTime("Checked permission");
 
-    const registration =
-      await navigator.serviceWorker.getRegistration();
-
-    console.log(
-      "3. Service Worker found:",
-      performance.now() - start,
-      "ms"
-    );
-
-    if (!registration?.active) {
-      throw new Error("No active Service Worker!");
+    if (permission === "default") {
+      permission = await Notification.requestPermission();
+      logTime("Permission requested");
     }
 
-    console.log("4. Showing notification...");
+    if (permission !== "granted") {
+      setMessage("Notification permission denied.");
+      return;
+    }
 
-    await registration.showNotification("Hello Doctor!", {
-      body: "Your PWA notification is working!",
-      requireInteraction: false,
-    });
+    const registration =
+      await navigator.serviceWorker?.getRegistration();
 
-    console.log(
-      "5. Notification request completed:",
-      performance.now() - start,
-      "ms"
-    );
+    logTime("Service worker checked");
 
+    if (registration?.active) {
+      await registration.showNotification("Hello Doctor!", {
+        body: "Your PWA notification is working!",
+      });
+    } else {
+      new Notification("Hello Doctor!", {
+        body: "Your PWA notification is working!",
+      });
+    }
+
+    logTime("Notification sent");
     setMessage("Notification sent!");
   } catch (error) {
     console.error("Notification error:", error);
     setMessage("Error: " + error.message);
   }
 };
+
+  return (
+    <div>
+      <h2>Notifications</h2>
+
+      <button onClick={sendNotification}>
+        Send Notification
+      </button>
+
+      <p>{message}</p>
+    </div>
+  );
+}
+
+export default Notifications;
